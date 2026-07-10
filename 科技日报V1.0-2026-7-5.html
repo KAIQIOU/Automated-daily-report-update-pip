@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>每日信源日报 · v1.1 · 2026-07-05</title>
+<style>
+:root {
+  --bg: #F4F1EC;
+  --surface: #FBF8F3;
+  --surface2: #EDE7DD;
+  --ink: #2E2A26;
+  --mute: #7A7268;
+  --accent: #9C8F7E;
+  --a5: #8B9DAA;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--ink);font:15px/1.65 -apple-system,"PingFang SC","Microsoft YaHei","Segoe UI",sans-serif}
+.wrap{max-width:760px;margin:0 auto;padding:32px 24px 64px}
+.i{width:14px;height:14px;display:inline-block;vertical-align:-2px;margin-right:4px}
+.eyebrow{font-size:11px;letter-spacing:1.5px;color:var(--mute);text-transform:uppercase;margin-bottom:8px}
+h1{font-size:28px;font-weight:600;letter-spacing:-0.5px;margin-bottom:6px}
+.lede{color:var(--mute);font-size:14px;margin-bottom:24px;line-height:1.7}
+
+.meta-bar{display:flex;flex-wrap:wrap;gap:8px;padding:14px 18px;background:var(--surface);border:1px solid var(--surface2);border-radius:10px;margin-bottom:24px}
+.meta-bar .mb{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--mute)}
+.meta-bar .mb b{color:var(--ink);font-weight:600}
+.meta-bar .sep{width:1px;height:14px;background:var(--surface2);margin:0 4px}
+
+/* ── Tab 切换 (纯 CSS, 无 JS) ── */
+/* 关键: input 必须跟 .panels 同父, 否则 ~ 选不到 */
+.tabs-root > input{display:none}
+.tabbar-wrap{position:sticky;top:0;z-index:50;background:var(--bg);padding:8px 0 0;margin:0 -24px 0;border-bottom:1px solid var(--surface2)}
+.tabbar{display:flex;gap:0;padding:0 24px;overflow-x:auto}
+.tabbar label{padding:11px 14px 12px;cursor:pointer;color:var(--mute);font-size:14px;white-space:nowrap;border-bottom:2px solid transparent;transition:color .15s,border-color .15s}
+.tabbar label:hover{color:var(--ink)}
+#tab-overview:checked ~ .tabbar label[for="tab-overview"],
+#tab-action:checked   ~ .tabbar label[for="tab-action"],
+#tab-promote:checked  ~ .tabbar label[for="tab-promote"],
+#tab-vision:checked   ~ .tabbar label[for="tab-vision"]{color:var(--ink);font-weight:600;border-bottom-color:var(--a5)}
+#tab-overview:checked ~ .panels #panel-overview,
+#tab-action:checked   ~ .panels #panel-action,
+#tab-promote:checked  ~ .panels #panel-promote,
+#tab-vision:checked   ~ .panels #panel-vision{display:block}
+.panels .panel{display:none}
+
+/* ── 主题卡片 (主题 panel) ── */
+.theme-hd{display:flex;align-items:center;gap:10px;margin-bottom:8px;padding-bottom:10px;border-bottom:1px dashed var(--surface2)}
+.theme-tag{display:inline-block;padding:3px 10px;border-radius:6px;color:#fff;font-size:11px;font-weight:600;letter-spacing:1px}
+.theme-name{flex:1;font-size:17px;font-weight:600;color:var(--ink)}
+.theme-count{font-size:13px;color:var(--mute)}
+.theme-brief{font-size:13px;color:var(--mute);line-height:1.7;margin-bottom:18px;padding:8px 12px;background:var(--surface);border-radius:8px;border-left:3px solid var(--theme-c, var(--surface2))}
+.theme-body{display:flex;flex-direction:column;gap:18px}
+
+/* ── 总览卡片 grid ── */
+.ov-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:6px}
+@media(min-width:640px){.ov-grid{grid-template-columns:repeat(3,1fr)}}
+.ov-card{display:block;background:var(--surface);border:1px solid var(--surface2);border-radius:12px;padding:16px 16px 12px;cursor:pointer;border-left:4px solid var(--theme-c);transition:transform .15s,box-shadow .15s}
+.ov-card:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(46,42,38,0.06)}
+.ov-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.ov-count b{font-size:20px;color:var(--ink);font-weight:700}
+.ov-count span{font-size:12px;color:var(--mute);margin-left:2px}
+.ov-name{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:6px;line-height:1.4}
+.ov-brief{font-size:12px;color:var(--mute);line-height:1.65;margin-bottom:10px}
+.ov-mini-list{list-style:none;padding:0;margin:0 0 10px}
+.ov-mini{display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px dashed var(--surface2);font-size:12px;color:var(--ink)}
+.ov-mini:last-child{border-bottom:none}
+.ov-num{flex:0 0 auto;width:18px;height:18px;border-radius:5px;background:var(--theme-c);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600}
+.ov-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ov-star{flex:0 0 auto;font-size:10px;letter-spacing:1px}
+.ov-cta{font-size:12px;color:var(--theme-c);font-weight:600;text-align:right;letter-spacing:0.5px}
+
+/* ── 单条 item ── */
+.item{background:var(--bg);border-radius:10px;padding:16px 18px;border-left:2px solid var(--theme-c)}
+.it-head{display:flex;gap:12px;align-items:flex-start;margin-bottom:10px}
+.it-idx{flex:0 0 auto;width:30px;height:30px;border-radius:8px;background:var(--theme-c);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;letter-spacing:0.5px}
+.it-main{flex:1;min-width:0}
+.it-title{display:block;font-size:15px;font-weight:600;color:var(--ink);text-decoration:none;line-height:1.5;margin-bottom:4px}
+.it-title:hover{color:var(--accent);text-decoration:underline}
+.it-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:12px;color:var(--mute)}
+.it-src{background:var(--surface);padding:2px 8px;border-radius:5px;border:1px solid var(--surface2);color:var(--ink)}
+.star-row{color:#C49A4A;font-size:12px;letter-spacing:1px}
+.star-row .star-dim{color:var(--surface2)}
+.star-row.star-empty{color:var(--mute);font-size:11px;letter-spacing:0}
+.it-pub{display:inline-flex;align-items:center;gap:3px;font-size:11px;color:var(--mute);background:var(--surface);padding:1px 7px;border-radius:4px}
+.it-pub .pub-empty{color:var(--mute)}
+.fb-mark{font-size:10px;color:#B0786E;background:#F4EAE5;padding:1px 6px;border-radius:4px}
+
+.it-section{margin-top:10px}
+.it-section-label{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--mute);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.it-summary,.it-value-body,.it-why-body{font-size:14px;line-height:1.7;color:var(--ink)}
+.it-value-body{font-weight:500}
+.it-why-body{font-style:italic;color:var(--ink);background:var(--surface);padding:6px 10px;border-radius:6px;border-left:2px solid var(--theme-c);font-size:13px}
+.it-points{list-style:none;padding:0;margin:0}
+.it-points li{position:relative;padding-left:18px;font-size:13px;line-height:1.7;color:var(--ink);margin-bottom:2px}
+.it-points li::before{content:"·";position:absolute;left:4px;top:-2px;color:var(--theme-c);font-size:18px;font-weight:700}
+
+.it-foot{display:flex;justify-content:flex-end;margin-top:10px;padding-top:8px;border-top:1px dashed var(--surface2)}
+.it-link{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--mute);text-decoration:none;letter-spacing:0.3px}
+.it-link:hover{color:var(--accent);text-decoration:underline}
+
+footer.page-ft{margin-top:48px;padding-top:20px;border-top:1px solid var(--surface2);font-size:12px;color:var(--mute);text-align:center}
+footer.page-ft .row{margin-bottom:4px}
+footer.page-ft b{color:var(--ink);font-weight:500}
+
+@media print{
+  .wrap{max-width:none;padding:0}
+  .tabbar-wrap{position:static}
+  .panels .panel{display:block !important;page-break-after:always}
+  .theme-card,.panel{break-inside:avoid;box-shadow:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">DAILY DIGEST · v1.1 · LLM: ON · 3 主题分组 + TAB 切换</div>
+  <h1>每日信源日报</h1>
+  <p class="lede">为数据分析 + AI 应用小组筛选 <b>34</b> 条近期高质量内容 · 数据截至 2026-07-05<br>
+  按 <b>3</b> 个主题分类, 每条含 <b>星级 + 留言 + 发布日期 + LLM 总结 + 价值 + 关键要点</b></p>
+
+  <div class="meta-bar">
+    <span class="mb"><b>34</b> 条 / LLM 成功 <b>34</b> · fallback <b>0</b></span>
+    <span class="sep"></span>
+    <span class="mb">3 主题 · 2026-07-05</span>
+    <span class="sep"></span>
+    <span class="mb">生成于 <b>15:04 UTC+8</b></span>
+  </div>
+
+  <div class="tabbar-wrap tabs-root">
+    <input type="radio" name="tab" id="tab-overview" checked>
+    <input type="radio" name="tab" id="tab-action">
+    <input type="radio" name="tab" id="tab-promote">
+    <input type="radio" name="tab" id="tab-vision">
+    <nav class="tabbar" role="tablist">
+      <label for="tab-overview">总览</label>
+      <label for="tab-action">动手</label>
+      <label for="tab-promote">提升</label>
+      <label for="tab-vision">视野</label>
+    </nav>
+    <div class="panels">
+      
+<section class="panel" id="panel-overview">
+  <header class="theme-hd" style="--theme-c:#8B9DAA">
+    <div class="theme-tag" style="background:#8B9DAA">总览</div>
+    <h2 class="theme-name">今日 34 条 · 按 3 主题分类</h2>
+    <div class="theme-count">点卡片可跳转</div>
+  </header>
+  <p class="theme-brief">每天的内容按"动手 / 提升 / 视野"3 主题分组, 点上方 tab 或下方卡片切换查看。</p>
+  <div class="ov-grid">
+    
+<label class="ov-card" for="tab-action" style="--theme-c:#A8B5A0">
+  <header class="ov-hd">
+    <div class="theme-tag" style="background:#A8B5A0">动手</div>
+    <div class="ov-count"><b>4</b><span> 条</span></div>
+  </header>
+  <h3 class="ov-name">AI 工具与 Agent (能立刻动手)</h3>
+  <p class="ov-brief">新模型 / Agent 框架 / 立刻能上手的 coding 工具与工作流</p>
+  <ul class="ov-mini-list">
+        <li class="ov-mini">
+          <span class="ov-num">01</span>
+          <span class="ov-title">Changelog</span>
+          <span class="ov-star"><span class="star-row" title="4/5">★★★★<span class="star-dim">☆</span></span></span>
+        </li>
+        <li class="ov-mini">
+          <span class="ov-num">02</span>
+          <span class="ov-title">[Simon Willison’s Weblog](/)</span>
+          <span class="ov-star"><span class="star-row" title="4/5">★★★★<span class="star-dim">☆</span></span></span>
+        </li>
+        <li class="ov-mini">
+          <span class="ov-num">03</span>
+          <span class="ov-title">[Simon Willison’s Weblog](/)</span>
+          <span class="ov-star"><span class="star-row" title="4/5">★★★★<span class="star-dim">☆</span></span></span>
+        </li>
+      </ul>
+  <div class="ov-cta">查看 4 条 →</div>
+</label>
+<label class="ov-card" for="tab-promote" style="--theme-c:#C4A484">
+  <header class="ov-hd">
+    <div class="theme-tag" style="background:#C4A484">提升</div>
+    <div class="ov-count"><b>4</b><span> 条</span></div>
+  </header>
+  <h3 class="ov-name">数据工程与 AI 工程实践</h3>
+  <p class="ov-brief">RAG / workflow / 数据处理 / prompt 的工程化踩坑与最佳实践</p>
+  <ul class="ov-mini-list">
+        <li class="ov-mini">
+          <span class="ov-num">01</span>
+          <span class="ov-title">硬氪首发 | 港大教授成立的忆生科技获数亿天使轮融资，致</span>
+          <span class="ov-star"><span class="star-row" title="4/5">★★★★<span class="star-dim">☆</span></span></span>
+        </li>
+        <li class="ov-mini">
+          <span class="ov-num">02</span>
+          <span class="ov-title">硬氪首发 | 小米前高管唐沐创业咖啡机器人，完成数亿融资</span>
+          <span class="ov-star"><span class="star-row" title="4/5">★★★★<span class="star-dim">☆</span></span></span>
+        </li>
+        <li class="ov-mini">
+          <span class="ov-num">03</span>
+          <span class="ov-title">手写 MCP Server 全栈实战：用 Node.js</span>
+          <span class="ov-star"><span class="star-row" title="4/5">★★★★<span class="star-dim">☆</span></span></span>
+        </li>
+      </ul>
+  <div class="ov-cta">查看 4 条 →</div>
+</label>
+<label class="ov-card" for="tab-vision" style="--theme-c:#B5A8A3">
+  <header class="ov-hd">
+    <div class="theme-tag" style="background:#B5A8A3">视野</div>
+    <div class="ov-count"><b>0</b><span> 条</span></div>
+  </header>
+  <h3 class="ov-name">行业趋势与战略 (视野与决策)</h3>
+  <p class="ov-brief">报告 / 融资 / 监管 / 商业模式 等行业大势与决策信号</p>
+  <ul class="ov-mini-list">
+      </ul>
+  <div class="ov-cta">查看 0 条 →</div>
+</label>
+  </div>
+</section>
+
+      
+<section class="panel" id="panel-action">
+  <header class="theme-hd" style="--theme-c:#A8B5A0">
+    <div class="theme-tag" style="background:#A8B5A0">动手</div>
+    <h2 class="theme-name">AI 工具与 Agent (能立刻动手)</h2>
+    <div class="theme-count">4 条</div>
+  </header>
+  <p class="theme-brief">新模型 / Agent 框架 / 立刻能上手的 coding 工具与工作流</p>
+  <div class="theme-body">
+    
+<article class="item" style="--theme-c:#A8B5A0">
+  <div class="it-head">
+    <div class="it-idx">01</div>
+    <div class="it-main">
+      <a class="it-title" href="https://ui.shadcn.com/docs/changelog" target="_blank" rel="noopener">Changelog</a>
+      <div class="it-meta">
+        <span class="it-src">Hacker News (front page)</span>
+        <span class="star-row" title="4/5">★★★★<span class="star-dim">☆</span></span>
+        <span class="it-pub"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg><span class="pub-date">2026-07-01</span></span>
+        
+      </div>
+    </div>
+  </div>
+
+  <div class="it-section it-why"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 4M12 17h.01"/></svg> 为什么读</div><div class="it-why-body">你项目里的 shadcn 组件底层正在换血,不看升级会踩坑。</div></div>
+
+  <div class="it-section">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8h4v8H6zm8 0h4v8h-4z"/></svg> 这篇讲什么</div>
+    <div class="it-summary">shadcn/ui 官方将默认组件库从 Radix 切换为同团队新作 Base UI,同时保留 Radix 选项,核心抽象保持不变。</div>
+  </div>
+
+  <div class="it-section it-value">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg> 对我们有啥用</div>
+    <div class="it-value-body">对 vibecoder 意义大:你正在用的 shadcn/ui 模板/AI 聊天界面默认底层换了,选型、升级、依赖迁移都要重新评估。</div>
+  </div>
+
+  <div class="it-section"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12l4 4 10-10"/></svg> 关键要点</div><ul class="it-points"><li>默认组件库从 Radix 换成 Base UI,Radix 仍可手动选用</li><li>保留同一套抽象层,业务代码和样式迁移成本可控</li><li>同列表中已有 Chat 界面专用组件(Message Scroller),适合 AI 应用前端</li></ul></div>
+
+  <div class="it-foot">
+    <a class="it-link" href="https://ui.shadcn.com/docs/changelog" target="_blank" rel="noopener"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 4h6v6M10 14L20 4M19 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h6"/></svg> 原文溯源 (供核验)</a>
+  </div>
+</article>
+
+<article class="item" style="--theme-c:#A8B5A0">
+  <div class="it-head">
+    <div class="it-idx">02</div>
+    <div class="it-main">
+      <a class="it-title" href="https://simonwillison.net/2026/Jul/4/better-models-worse-tools/#atom-everything" target="_blank" rel="noopener">[Simon Willison’s Weblog](/)</a>
+      <div class="it-meta">
+        <span class="it-src">Simon Willison's Weblog</span>
+        <span class="star-row" title="4/5">★★★★<span class="star-dim">☆</span></span>
+        <span class="it-pub"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg><span class="pub-date">2026-07-04</span></span>
+        
+      </div>
+    </div>
+  </div>
+
+  <div class="it-section it-why"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 4M12 17h.01"/></svg> 为什么读</div><div class="it-why-body">搞清新版 Claude 为什么在自研工具上反而变笨,帮你提前避坑</div></div>
+
+  <div class="it-section">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8h4v8H6zm8 0h4v8h-4z"/></svg> 这篇讲什么</div>
+    <div class="it-summary">Anthropic 新模型(Opus 4.8/Sonnet 5)调用第三方编辑工具(如 Pi)时, 因 RL 训练偏向 Claude Code 内置工具, 常生成不符合 schema 的参数, 导致调用失败率反升。</div>
+  </div>
+
+  <div class="it-section it-value">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg> 对我们有啥用</div>
+    <div class="it-value-body">对 vibecoder 自研编码 harness 有直接警示:底层模型对自带工具有强偏好,自研 edit 工具需考虑模型适配,可能要实现多套 edit 工具或校验层。</div>
+  </div>
+
+  <div class="it-section"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12l4 4 10-10"/></svg> 关键要点</div><ul class="it-points"><li>新版 Claude(Opus 4.8、Sonnet 5)在第三方 edit 工具上反而更易出错,会虚构训练中学到的额外字段</li><li>推测原因是 Anthropic 通过 RL 让模型更擅长 Claude Code 内置的 search/replace edit 工具</li><li>不同厂商(Anthropic 偏好 search-replace、OpenAI 用 apply_patch)工具训练偏好不同,第三方 harness 需为不同模型实现差异化工具集</li></ul></div>
+
+  <div class="it-foot">
+    <a class="it-link" href="https://simonwillison.net/2026/Jul/4/better-models-worse-tools/#atom-everything" target="_blank" rel="noopener"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 4h6v6M10 14L20 4M19 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h6"/></svg> 原文溯源 (供核验)</a>
+  </div>
+</article>
+
+<article class="item" style="--theme-c:#A8B5A0">
+  <div class="it-head">
+    <div class="it-idx">03</div>
+    <div class="it-main">
+      <a class="it-title" href="https://simonwillison.net/2026/Jul/5/sqlite-utils-fable/#atom-everything" target="_blank" rel="noopener">[Simon Willison’s Weblog](/)</a>
+      <div class="it-meta">
+        <span class="it-src">Simon Willison's Weblog</span>
+        <span class="star-row" title="4/5">★★★★<span class="star-dim">☆</span></span>
+        <span class="it-pub"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg><span class="pub-date">2026-07-05</span></span>
+        
+      </div>
+    </div>
+  </div>
+
+  <div class="it-section it-why"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 4M12 17h.01"/></svg> 为什么读</div><div class="it-why-body">一个真实案例:AI 帮人抓住会丢数据的隐蔽 bug,值不值花 $149 你自己看。</div></div>
+
+  <div class="it-section">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8h4v8H6zm8 0h4v8h-4z"/></svg> 这篇讲什么</div>
+    <div class="it-summary">Simon 用 Claude Fable AI 助手对 sqlite-utils 4.0 做发布前审查,发现严重事务 bug,37 轮提示完成 rc2,成本约 $149。</div>
+  </div>
+
+  <div class="it-section it-value">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg> 对我们有啥用</div>
+    <div class="it-value-body">对 vibecoder 来说是'AI 做发布前代码审查'的实战范例,证明 AI 能发现人类易遗漏的事务状态类隐蔽 bug,且性价比极高。</div>
+  </div>
+
+  <div class="it-section"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12l4 4 10-10"/></svg> 关键要点</div><ul class="it-points"><li>AI 在 sqlite-utils 4.0 审查中发现 delete_where() 不提交事务导致数据丢失的严重 bug</li><li>37 轮 prompt、34 次 commit、横跨 30 个文件完成 rc2,总花费约 $149</li><li>展示'AI 做人类容易遗漏的隐蔽 bug 审查'的工作流范式</li></ul></div>
+
+  <div class="it-foot">
+    <a class="it-link" href="https://simonwillison.net/2026/Jul/5/sqlite-utils-fable/#atom-everything" target="_blank" rel="noopener"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 4h6v6M10 14L20 4M19 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h6"/></svg> 原文溯源 (供核验)</a>
+  </div>
+</article>
+
+<article class="item" style="--theme-c:#A8B5A0">
+  <div class="it-head">
+    <div class="it-idx">04</div>
+    <div class="it-main">
+      <a class="it-title" href="https://github.com/alirezarezvani/claude-skills" target="_blank" rel="noopener">Claude Code Skills &amp; Plugins — Agent Skills for Every Coding Tool</a>
+      <div class="it-meta">
+        <span class="it-src">GitHub Trending · Python (daily)</span>
+        <span class="star-row" title="4/5">★★★★<span class="star-dim">☆</span></span>
+        <span class="it-pub"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg><span class="pub-empty">—</span></span>
+        
+      </div>
+    </div>
+  </div>
+
+  <div class="it-section it-why"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 4M12 17h.01"/></svg> 为什么读</div><div class="it-why-body">你想给 Claude Code / Cursor / Vibe 等工具造轮子?这份 354 个 skill 的开源库直接给你抄作业。</div></div>
+
+  <div class="it-section">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8h4v8H6zm8 0h4v8h-4z"/></svg> 这篇讲什么</div>
+    <div class="it-summary">这是一个 GitHub 仓库,提供 354 个开箱即用的 Claude Code skills 与 agent plugins,覆盖 13 款 AI 编程工具,且 593 个 Python CLI 工具零依赖。</div>
+  </div>
+
+  <div class="it-section it-value">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg> 对我们有啥用</div>
+    <div class="it-value-body">对 vibecoder 很有用:可直接复用其 SKILL.md 模板、stdlib-only Python 工具结构以及多 Agent 适配方案,作为自家 agent skill 系统的参考蓝本。</div>
+  </div>
+
+  <div class="it-section"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12l4 4 10-10"/></svg> 关键要点</div><ul class="it-points"><li>覆盖 13 款 AI 编程工具的 354 个 skills,使用统一的 agentskills.io SKILL.md 标准</li><li>所有 593 个 Python CLI 工具仅用标准库实现,零 pip 依赖,易于分发和审计</li><li>v2.9.0 已内置 ResearchOps、AEO、C-level personas 等垂直领域能力,可借鉴领域拆分思路</li></ul></div>
+
+  <div class="it-foot">
+    <a class="it-link" href="https://github.com/alirezarezvani/claude-skills" target="_blank" rel="noopener"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 4h6v6M10 14L20 4M19 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h6"/></svg> 原文溯源 (供核验)</a>
+  </div>
+</article>
+
+  </div>
+</section>
+
+<section class="panel" id="panel-promote">
+  <header class="theme-hd" style="--theme-c:#C4A484">
+    <div class="theme-tag" style="background:#C4A484">提升</div>
+    <h2 class="theme-name">数据工程与 AI 工程实践</h2>
+    <div class="theme-count">4 条</div>
+  </header>
+  <p class="theme-brief">RAG / workflow / 数据处理 / prompt 的工程化踩坑与最佳实践</p>
+  <div class="theme-body">
+    
+<article class="item" style="--theme-c:#C4A484">
+  <div class="it-head">
+    <div class="it-idx">01</div>
+    <div class="it-main">
+      <a class="it-title" href="https://36kr.com/p/3882365879005186?f=rss" target="_blank" rel="noopener">硬氪首发 | 港大教授成立的忆生科技获数亿天使轮融资，致力于为机器人造一套记忆系统</a>
+      <div class="it-meta">
+        <span class="it-src">36氪</span>
+        <span class="star-row" title="4/5">★★★★<span class="star-dim">☆</span></span>
+        <span class="it-pub"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg><span class="pub-date">2026-07-05</span></span>
+        
+      </div>
+    </div>
+  </div>
+
+  <div class="it-section it-why"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 4M12 17h.01"/></svg> 为什么读</div><div class="it-why-body">看清具身智能"反 VLA"的内存学习新路径，以及顶流学者+产业资本押注背后的赛道判断。</div></div>
+
+  <div class="it-section">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8h4v8H6zm8 0h4v8h-4z"/></svg> 这篇讲什么</div>
+    <div class="it-summary">港大马毅教授 2023 年创立的具身智能公司「忆生科技」完成数亿元天使轮，主打基于记忆机制的机器人大脑+小脑闭环架构，宣称相较 VLA 模型多任务表现提升 3 倍以上。</div>
+  </div>
+
+  <div class="it-section it-value">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg> 对我们有啥用</div>
+    <div class="it-value-body">对 vibecoder 意味着具身智能正在从纯 VLA 端到端路线分化出"记忆+白盒可解释"新范式，且有学术顶流+重资本背书，是判断未来工具链与数据需求方向的重要信号。</div>
+  </div>
+
+  <div class="it-section"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12l4 4 10-10"/></svg> 关键要点</div><ul class="it-points"><li>马毅（马尔奖、IEEE/ACM/SIAM 三料 Fellow）联合高盛华、杨言超于 2023 年 9 月创立忆生科技，主打"感知—预测—交互"闭环的脑+小脑架构</li><li>用白盒可解释网络替代人工打标，单模型多任务成功率 95%+，比传统 VLA 多任务表现提升 3 倍以上，并支持跨本体技能迁移</li><li>已搭建含 EngramTeleOp 遥操、EngramEgo 第一视角数据采集等四大产品矩阵，融资本轮由正大系中生制药、张江系及多家机构共同押注</li></ul></div>
+
+  <div class="it-foot">
+    <a class="it-link" href="https://36kr.com/p/3882365879005186?f=rss" target="_blank" rel="noopener"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 4h6v6M10 14L20 4M19 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h6"/></svg> 原文溯源 (供核验)</a>
+  </div>
+</article>
+
+<article class="item" style="--theme-c:#C4A484">
+  <div class="it-head">
+    <div class="it-idx">02</div>
+    <div class="it-main">
+      <a class="it-title" href="https://36kr.com/p/3882361033322755?f=rss" target="_blank" rel="noopener">硬氪首发 | 小米前高管唐沐创业咖啡机器人，完成数亿融资，林斌、黎万强投过</a>
+      <div class="it-meta">
+        <span class="it-src">36氪</span>
+        <span class="star-row" title="4/5">★★★★<span class="star-dim">☆</span></span>
+        <span class="it-pub"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg><span class="pub-date">2026-07-05</span></span>
+        
+      </div>
+    </div>
+  </div>
+
+  <div class="it-section it-why"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 4M12 17h.01"/></svg> 为什么读</div><div class="it-why-body">想把垂直 AI 模型塞进实体场景的人，直接抄这份从数据闭环到单店回本期的作业。</div></div>
+
+  <div class="it-section">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8h4v8H6zm8 0h4v8h-4z"/></svg> 这篇讲什么</div>
+    <div class="it-summary">前小米高管唐沐创立的餐饮具身机器人公司「影智XBOT」连融数亿元，主打商场咖啡机器人，去年营收破亿。</div>
+  </div>
+
+  <div class="it-section it-value">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg> 对我们有啥用</div>
+    <div class="it-value-body">给出「垂直场景 + 基座模型微调 + 数据飞轮」的具身智能落地完整范本，含 SKU 定价、产能、单店 ROI 等可复用参数。</div>
+  </div>
+
+  <div class="it-section"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12l4 4 10-10"/></svg> 关键要点</div><ul class="it-points"><li>技术架构：XOS 3.0 三层，大脑用 DeepSeek 微调「知味餐饮大模型」，基于 400 万杯真实咖啡数据，VLA 仅作异常兜底以绕开泛化难题</li><li>产品矩阵：主力款 XBOT C3 咖啡机 21.9 万元/台，6 轴臂±0.02mm、80 杯/时，商场投放 6–8 个月回本，设计寿命 5 年</li><li>数据飞轮：仿真预训练 + 真实场景在线强化学习 + 300 万次 RLHF 人类偏好对齐，南京/岳阳/上海/亦庄年产能 2 万台</li></ul></div>
+
+  <div class="it-foot">
+    <a class="it-link" href="https://36kr.com/p/3882361033322755?f=rss" target="_blank" rel="noopener"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 4h6v6M10 14L20 4M19 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h6"/></svg> 原文溯源 (供核验)</a>
+  </div>
+</article>
+
+<article class="item" style="--theme-c:#C4A484">
+  <div class="it-head">
+    <div class="it-idx">03</div>
+    <div class="it-main">
+      <a class="it-title" href="https://juejin.cn/post/7657950220089884681" target="_blank" rel="noopener">手写 MCP Server 全栈实战：用 Node.js + Zod 从零构建 AI 文件读取工具</a>
+      <div class="it-meta">
+        <span class="it-src">掘金 (热门)</span>
+        <span class="star-row" title="4/5">★★★★<span class="star-dim">☆</span></span>
+        <span class="it-pub"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg><span class="pub-date">2026-07-05</span></span>
+        
+      </div>
+    </div>
+  </div>
+
+  <div class="it-section it-why"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 4M12 17h.01"/></svg> 为什么读</div><div class="it-why-body">想让 AI 调用自己的工具？40 行代码带你从消费 MCP 进阶到造 MCP。</div></div>
+
+  <div class="it-section">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8h4v8H6zm8 0h4v8h-4z"/></svg> 这篇讲什么</div>
+    <div class="it-summary">用 Node.js + Zod 从零手写一个 MCP Server，实现 AI 读取本地文件的能力，详解协议通信、工具注册与参数校验全流程。</div>
+  </div>
+
+  <div class="it-section it-value">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg> 对我们有啥用</div>
+    <div class="it-value-body">对 vibecoder 来说，这是把 AI 接入本地数据/工具的标准范式，可直接复用到日志分析、数据库查询等自定义场景。</div>
+  </div>
+
+  <div class="it-section"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12l4 4 10-10"/></svg> 关键要点</div><ul class="it-points"><li>MCP Server 本质是独立 Node 进程，通过 stdin/stdout 与 Host 做 JSON-RPC 通信</li><li>用 @modelcontextprotocol/sdk + zod 约 40 行代码即可实现完整文件读取工具</li><li>Zod Schema 提供运行时参数类型校验，比手写 JSON Schema 更简洁安全</li></ul></div>
+
+  <div class="it-foot">
+    <a class="it-link" href="https://juejin.cn/post/7657950220089884681" target="_blank" rel="noopener"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 4h6v6M10 14L20 4M19 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h6"/></svg> 原文溯源 (供核验)</a>
+  </div>
+</article>
+
+<article class="item" style="--theme-c:#C4A484">
+  <div class="it-head">
+    <div class="it-idx">04</div>
+    <div class="it-main">
+      <a class="it-title" href="https://juejin.cn/post/7658508718037352499" target="_blank" rel="noopener">Phase 7.3 复盘：后台任务不只是“扔进队列”，还要能被看见</a>
+      <div class="it-meta">
+        <span class="it-src">掘金 (热门)</span>
+        <span class="star-row" title="4/5">★★★★<span class="star-dim">☆</span></span>
+        <span class="it-pub"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg><span class="pub-date">2026-07-05</span></span>
+        
+      </div>
+    </div>
+  </div>
+
+  <div class="it-section it-why"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 4M12 17h.01"/></svg> 为什么读</div><div class="it-why-body">做 AI 应用必踩『队列黑盒』坑，这篇给了可直接复制的观测范式和踩坑清单。</div></div>
+
+  <div class="it-section">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8h4v8H6zm8 0h4v8h-4z"/></svg> 这篇讲什么</div>
+    <div class="it-summary">PrepMind AI 在 Phase 7.3 给后台任务加了可观测层：用 PostgreSQL 的 BackgroundJob 做权威状态、summary API 给前端轻量入口、进程内 EventBus 做失败隔离，避免队列黑盒。</div>
+  </div>
+
+  <div class="it-section it-value">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg> 对我们有啥用</div>
+    <div class="it-value-body">对做 AI 应用的 vibecoder 来说，文档解析、embedding 等长任务几乎都会进队列；这套『任务表+summary+条件轮询+handler 隔离』的范式可直接复用，避免用户和开发者都摸黑。</div>
+  </div>
+
+  <div class="it-section"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12l4 4 10-10"/></svg> 关键要点</div><ul class="it-points"><li>BackgroundJob 用 PG 做权威状态，只存脱敏 metadata，避免变成第二个内容库</li><li>activeCount 必须数据库真实统计，不能只看最近 N 条，否则旧卡死任务会被 UI 漏掉</li><li>EventBus handler 必须失败隔离，且日志不能 dump payload，防止敏感数据泄漏</li></ul></div>
+
+  <div class="it-foot">
+    <a class="it-link" href="https://juejin.cn/post/7658508718037352499" target="_blank" rel="noopener"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 4h6v6M10 14L20 4M19 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h6"/></svg> 原文溯源 (供核验)</a>
+  </div>
+</article>
+
+  </div>
+</section>
+
+    </div>
+  </div>
+
+  <footer class="page-ft">
+    <div class="row">daily-digest-agent v1.1 · 3 主题 (动手/提升/视野) · 4 tab 切换 (无 JS) · 每主题 TOP 4</div>
+    <div class="row">信源池: <b>9 源 (5 英 + 4 中)</b> · LLM: <b>ON</b> · 输出: <b>半自动日报更新/2026-07-05-daily-V1.1/</b></div>
+    <div class="row">© vibecoding 数据分析小组 · 每条总结基于 markitdown 后的原文 + LLM 总结</div>
+  </footer>
+
+</div>
+</body>
+</html>

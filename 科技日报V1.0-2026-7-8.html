@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>每日信源日报 · v1.1 · 2026-07-08</title>
+<style>
+:root {
+  --bg: #F4F1EC;
+  --surface: #FBF8F3;
+  --surface2: #EDE7DD;
+  --ink: #2E2A26;
+  --mute: #7A7268;
+  --accent: #9C8F7E;
+  --a5: #8B9DAA;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--ink);font:15px/1.65 -apple-system,"PingFang SC","Microsoft YaHei","Segoe UI",sans-serif}
+.wrap{max-width:760px;margin:0 auto;padding:32px 24px 64px}
+.i{width:14px;height:14px;display:inline-block;vertical-align:-2px;margin-right:4px}
+.eyebrow{font-size:11px;letter-spacing:1.5px;color:var(--mute);text-transform:uppercase;margin-bottom:8px}
+h1{font-size:28px;font-weight:600;letter-spacing:-0.5px;margin-bottom:6px}
+.lede{color:var(--mute);font-size:14px;margin-bottom:24px;line-height:1.7}
+
+.meta-bar{display:flex;flex-wrap:wrap;gap:8px;padding:14px 18px;background:var(--surface);border:1px solid var(--surface2);border-radius:10px;margin-bottom:24px}
+.meta-bar .mb{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--mute)}
+.meta-bar .mb b{color:var(--ink);font-weight:600}
+.meta-bar .sep{width:1px;height:14px;background:var(--surface2);margin:0 4px}
+
+/* ── Tab 切换 (纯 CSS, 无 JS) ── */
+/* 关键: input 必须跟 .panels 同父, 否则 ~ 选不到 */
+.tabs-root > input{display:none}
+.tabbar-wrap{position:sticky;top:0;z-index:50;background:var(--bg);padding:8px 0 0;margin:0 -24px 0;border-bottom:1px solid var(--surface2)}
+.tabbar{display:flex;gap:0;padding:0 24px;overflow-x:auto}
+.tabbar label{padding:11px 14px 12px;cursor:pointer;color:var(--mute);font-size:14px;white-space:nowrap;border-bottom:2px solid transparent;transition:color .15s,border-color .15s}
+.tabbar label:hover{color:var(--ink)}
+#tab-overview:checked ~ .tabbar label[for="tab-overview"],
+#tab-action:checked   ~ .tabbar label[for="tab-action"],
+#tab-promote:checked  ~ .tabbar label[for="tab-promote"],
+#tab-vision:checked   ~ .tabbar label[for="tab-vision"]{color:var(--ink);font-weight:600;border-bottom-color:var(--a5)}
+#tab-overview:checked ~ .panels #panel-overview,
+#tab-action:checked   ~ .panels #panel-action,
+#tab-promote:checked  ~ .panels #panel-promote,
+#tab-vision:checked   ~ .panels #panel-vision{display:block}
+.panels .panel{display:none}
+
+/* ── 主题卡片 (主题 panel) ── */
+.theme-hd{display:flex;align-items:center;gap:10px;margin-bottom:8px;padding-bottom:10px;border-bottom:1px dashed var(--surface2)}
+.theme-tag{display:inline-block;padding:3px 10px;border-radius:6px;color:#fff;font-size:11px;font-weight:600;letter-spacing:1px}
+.theme-name{flex:1;font-size:17px;font-weight:600;color:var(--ink)}
+.theme-count{font-size:13px;color:var(--mute)}
+.theme-brief{font-size:13px;color:var(--mute);line-height:1.7;margin-bottom:18px;padding:8px 12px;background:var(--surface);border-radius:8px;border-left:3px solid var(--theme-c, var(--surface2))}
+.theme-body{display:flex;flex-direction:column;gap:18px}
+
+/* ── 总览卡片 grid ── */
+.ov-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:6px}
+@media(min-width:640px){.ov-grid{grid-template-columns:repeat(3,1fr)}}
+.ov-card{display:block;background:var(--surface);border:1px solid var(--surface2);border-radius:12px;padding:16px 16px 12px;cursor:pointer;border-left:4px solid var(--theme-c);transition:transform .15s,box-shadow .15s}
+.ov-card:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(46,42,38,0.06)}
+.ov-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.ov-count b{font-size:20px;color:var(--ink);font-weight:700}
+.ov-count span{font-size:12px;color:var(--mute);margin-left:2px}
+.ov-name{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:6px;line-height:1.4}
+.ov-brief{font-size:12px;color:var(--mute);line-height:1.65;margin-bottom:10px}
+.ov-mini-list{list-style:none;padding:0;margin:0 0 10px}
+.ov-mini{display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px dashed var(--surface2);font-size:12px;color:var(--ink)}
+.ov-mini:last-child{border-bottom:none}
+.ov-num{flex:0 0 auto;width:18px;height:18px;border-radius:5px;background:var(--theme-c);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600}
+.ov-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ov-star{flex:0 0 auto;font-size:10px;letter-spacing:1px}
+.ov-cta{font-size:12px;color:var(--theme-c);font-weight:600;text-align:right;letter-spacing:0.5px}
+
+/* ── 单条 item ── */
+.item{background:var(--bg);border-radius:10px;padding:16px 18px;border-left:2px solid var(--theme-c)}
+.it-head{display:flex;gap:12px;align-items:flex-start;margin-bottom:10px}
+.it-idx{flex:0 0 auto;width:30px;height:30px;border-radius:8px;background:var(--theme-c);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;letter-spacing:0.5px}
+.it-main{flex:1;min-width:0}
+.it-title{display:block;font-size:15px;font-weight:600;color:var(--ink);text-decoration:none;line-height:1.5;margin-bottom:4px}
+.it-title:hover{color:var(--accent);text-decoration:underline}
+.it-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:12px;color:var(--mute)}
+.it-src{background:var(--surface);padding:2px 8px;border-radius:5px;border:1px solid var(--surface2);color:var(--ink)}
+.star-row{color:#C49A4A;font-size:12px;letter-spacing:1px}
+.star-row .star-dim{color:var(--surface2)}
+.star-row.star-empty{color:var(--mute);font-size:11px;letter-spacing:0}
+.it-pub{display:inline-flex;align-items:center;gap:3px;font-size:11px;color:var(--mute);background:var(--surface);padding:1px 7px;border-radius:4px}
+.it-pub .pub-empty{color:var(--mute)}
+.fb-mark{font-size:10px;color:#B0786E;background:#F4EAE5;padding:1px 6px;border-radius:4px}
+
+.it-section{margin-top:10px}
+.it-section-label{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--mute);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.it-summary,.it-value-body,.it-why-body{font-size:14px;line-height:1.7;color:var(--ink)}
+.it-value-body{font-weight:500}
+.it-why-body{font-style:italic;color:var(--ink);background:var(--surface);padding:6px 10px;border-radius:6px;border-left:2px solid var(--theme-c);font-size:13px}
+.it-points{list-style:none;padding:0;margin:0}
+.it-points li{position:relative;padding-left:18px;font-size:13px;line-height:1.7;color:var(--ink);margin-bottom:2px}
+.it-points li::before{content:"·";position:absolute;left:4px;top:-2px;color:var(--theme-c);font-size:18px;font-weight:700}
+
+.it-foot{display:flex;justify-content:flex-end;margin-top:10px;padding-top:8px;border-top:1px dashed var(--surface2)}
+.it-link{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--mute);text-decoration:none;letter-spacing:0.3px}
+.it-link:hover{color:var(--accent);text-decoration:underline}
+
+footer.page-ft{margin-top:48px;padding-top:20px;border-top:1px solid var(--surface2);font-size:12px;color:var(--mute);text-align:center}
+footer.page-ft .row{margin-bottom:4px}
+footer.page-ft b{color:var(--ink);font-weight:500}
+
+@media print{
+  .wrap{max-width:none;padding:0}
+  .tabbar-wrap{position:static}
+  .panels .panel{display:block !important;page-break-after:always}
+  .theme-card,.panel{break-inside:avoid;box-shadow:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">DAILY DIGEST · v1.1 · LLM: ON · 3 主题分组 + TAB 切换</div>
+  <h1>每日信源日报</h1>
+  <p class="lede">为数据分析 + AI 应用小组筛选 <b>39</b> 条近期高质量内容 · 数据截至 2026-07-08<br>
+  按 <b>3</b> 个主题分类, 每条含 <b>星级 + 留言 + 发布日期 + LLM 总结 + 价值 + 关键要点</b></p>
+
+  <div class="meta-bar">
+    <span class="mb"><b>39</b> 条 / LLM 成功 <b>38</b> · fallback <b>1</b></span>
+    <span class="sep"></span>
+    <span class="mb">3 主题 · 2026-07-08</span>
+    <span class="sep"></span>
+    <span class="mb">生成于 <b>10:05 UTC+8</b></span>
+  </div>
+
+  <div class="tabbar-wrap tabs-root">
+    <input type="radio" name="tab" id="tab-overview" checked>
+    <input type="radio" name="tab" id="tab-action">
+    <input type="radio" name="tab" id="tab-promote">
+    <input type="radio" name="tab" id="tab-vision">
+    <nav class="tabbar" role="tablist">
+      <label for="tab-overview">总览</label>
+      <label for="tab-action">动手</label>
+      <label for="tab-promote">提升</label>
+      <label for="tab-vision">视野</label>
+    </nav>
+    <div class="panels">
+      
+<section class="panel" id="panel-overview">
+  <header class="theme-hd" style="--theme-c:#8B9DAA">
+    <div class="theme-tag" style="background:#8B9DAA">总览</div>
+    <h2 class="theme-name">今日 39 条 · 按 3 主题分类</h2>
+    <div class="theme-count">点卡片可跳转</div>
+  </header>
+  <p class="theme-brief">每天的内容按"动手 / 提升 / 视野"3 主题分组, 点上方 tab 或下方卡片切换查看。</p>
+  <div class="ov-grid">
+    
+<label class="ov-card" for="tab-action" style="--theme-c:#A8B5A0">
+  <header class="ov-hd">
+    <div class="theme-tag" style="background:#A8B5A0">动手</div>
+    <div class="ov-count"><b>4</b><span> 条</span></div>
+  </header>
+  <h3 class="ov-name">AI 工具与 Agent (能立刻动手)</h3>
+  <p class="ov-brief">新模型 / Agent 框架 / 立刻能上手的 coding 工具与工作流</p>
+  <ul class="ov-mini-list">
+        <li class="ov-mini">
+          <span class="ov-num">01</span>
+          <span class="ov-title">Later, load it quickly, this</span>
+          <span class="ov-star"><span class="star-row" title="4/5">★★★★<span class="star-dim">☆</span></span></span>
+        </li>
+        <li class="ov-mini">
+          <span class="ov-num">02</span>
+          <span class="ov-title">arXivLabs: experimental proj</span>
+          <span class="ov-star"><span class="star-row" title="4/5">★★★★<span class="star-dim">☆</span></span></span>
+        </li>
+        <li class="ov-mini">
+          <span class="ov-num">03</span>
+          <span class="ov-title">[Simon Willison’s Weblog](/)</span>
+          <span class="ov-star"><span class="star-row" title="4/5">★★★★<span class="star-dim">☆</span></span></span>
+        </li>
+      </ul>
+  <div class="ov-cta">查看 4 条 →</div>
+</label>
+<label class="ov-card" for="tab-promote" style="--theme-c:#C4A484">
+  <header class="ov-hd">
+    <div class="theme-tag" style="background:#C4A484">提升</div>
+    <div class="ov-count"><b>4</b><span> 条</span></div>
+  </header>
+  <h3 class="ov-name">数据工程与 AI 工程实践</h3>
+  <p class="ov-brief">RAG / workflow / 数据处理 / prompt 的工程化踩坑与最佳实践</p>
+  <ul class="ov-mini-list">
+        <li class="ov-mini">
+          <span class="ov-num">01</span>
+          <span class="ov-title">「德睿智药」获5200万美元B轮融资，AI设计的减肥药已</span>
+          <span class="ov-star"><span class="star-row" title="4/5">★★★★<span class="star-dim">☆</span></span></span>
+        </li>
+        <li class="ov-mini">
+          <span class="ov-num">02</span>
+          <span class="ov-title">瑞为技术暗盘破发，收盘跌17%｜敲钟时刻</span>
+          <span class="ov-star"><span class="star-row" title="3/5">★★★<span class="star-dim">☆☆</span></span></span>
+        </li>
+        <li class="ov-mini">
+          <span class="ov-num">03</span>
+          <span class="ov-title">易控智驾暗盘破发：盘中一度跌近两成、收涨4%｜敲钟时刻</span>
+          <span class="ov-star"><span class="star-row" title="3/5">★★★<span class="star-dim">☆☆</span></span></span>
+        </li>
+      </ul>
+  <div class="ov-cta">查看 4 条 →</div>
+</label>
+<label class="ov-card" for="tab-vision" style="--theme-c:#B5A8A3">
+  <header class="ov-hd">
+    <div class="theme-tag" style="background:#B5A8A3">视野</div>
+    <div class="ov-count"><b>4</b><span> 条</span></div>
+  </header>
+  <h3 class="ov-name">行业趋势与战略 (视野与决策)</h3>
+  <p class="ov-brief">报告 / 融资 / 监管 / 商业模式 等行业大势与决策信号</p>
+  <ul class="ov-mini-list">
+        <li class="ov-mini">
+          <span class="ov-num">01</span>
+          <span class="ov-title">机器人视觉迎来新突破！蚂蚁灵波空间感知模型LingBot</span>
+          <span class="ov-star"><span class="star-row" title="4/5">★★★★<span class="star-dim">☆</span></span></span>
+        </li>
+        <li class="ov-mini">
+          <span class="ov-num">02</span>
+          <span class="ov-title">从共识到非共识：科技有「联想」沙龙首场活动直击具身智能产</span>
+          <span class="ov-star"><span class="star-row" title="3/5">★★★<span class="star-dim">☆☆</span></span></span>
+        </li>
+        <li class="ov-mini">
+          <span class="ov-num">03</span>
+          <span class="ov-title">让Skill“有图可依”：openJiuwen首发多模态</span>
+          <span class="ov-star"><span class="star-row" title="3/5">★★★<span class="star-dim">☆☆</span></span></span>
+        </li>
+      </ul>
+  <div class="ov-cta">查看 4 条 →</div>
+</label>
+  </div>
+</section>
+
+      
+<section class="panel" id="panel-action">
+  <header class="theme-hd" style="--theme-c:#A8B5A0">
+    <div class="theme-tag" style="background:#A8B5A0">动手</div>
+    <h2 class="theme-name">AI 工具与 Agent (能立刻动手)</h2>
+    <div class="theme-count">4 条</div>
+  </header>
+  <p class="theme-brief">新模型 / Agent 框架 / 立刻能上手的 coding 工具与工作流</p>
+  <div class="theme-body">
+    
+<article class="item" style="--theme-c:#A8B5A0">
+  <div class="it-head">
+    <div class="it-idx">01</div>
+    <div class="it-main">
+      <a class="it-title" href="https://github.com/kyutai-labs/pocket-tts" target="_blank" rel="noopener">Later, load it quickly, this is quite fast as it's just reading the kvcache</a>
+      <div class="it-meta">
+        <span class="it-src">GitHub Trending · Python (daily)</span>
+        <span class="star-row" title="4/5">★★★★<span class="star-dim">☆</span></span>
+        <span class="it-pub"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg><span class="pub-date">2026-01-13</span></span>
+        
+      </div>
+    </div>
+  </div>
+
+  <div class="it-section it-why"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 4M12 17h.01"/></svg> 为什么读</div><div class="it-why-body">CPU 就能跑、pip 即装的 TTS,语音类 demo 和产品集成几乎零门槛。</div></div>
+
+  <div class="it-section">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8h4v8H6zm8 0h4v8h-4z"/></svg> 这篇讲什么</div>
+    <div class="it-summary">Kyutai 开源的 Pocket TTS 是一个 100M 参数的 CPU 端轻量文本转语音模型,延迟低、支持流式输出、声音克隆和多语言。</div>
+  </div>
+
+  <div class="it-section it-value">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg> 对我们有啥用</div>
+    <div class="it-value-body">给 vibecoder 提供了一套零 GPU 依赖、pip 即装的 TTS 方案,可快速集成语音播报、有声书、浏览器侧语音等功能。</div>
+  </div>
+
+  <div class="it-section"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12l4 4 10-10"/></svg> 关键要点</div><ul class="it-points"><li>100M 参数,仅需 2 个 CPU 核即可约 6 倍实时合成,首包延迟约 200ms</li><li>支持声音克隆及英法德葡意西多语言,可处理超长文本</li><li>提供 Python API/CLI 与 OpenAI TTS 兼容接口,还能跑在浏览器端</li></ul></div>
+
+  <div class="it-foot">
+    <a class="it-link" href="https://github.com/kyutai-labs/pocket-tts" target="_blank" rel="noopener"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 4h6v6M10 14L20 4M19 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h6"/></svg> 原文溯源 (供核验)</a>
+  </div>
+</article>
+
+<article class="item" style="--theme-c:#A8B5A0">
+  <div class="it-head">
+    <div class="it-idx">02</div>
+    <div class="it-main">
+      <a class="it-title" href="https://arxiv.org/abs/2607.02820" target="_blank" rel="noopener">arXivLabs: experimental projects with community collaborators</a>
+      <div class="it-meta">
+        <span class="it-src">Hacker News (front page)</span>
+        <span class="star-row" title="4/5">★★★★<span class="star-dim">☆</span></span>
+        <span class="it-pub"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg><span class="pub-date">2026-07-02</span></span>
+        
+      </div>
+    </div>
+  </div>
+
+  <div class="it-section it-why"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 4M12 17h.01"/></svg> 为什么读</div><div class="it-why-body">你 pin 的 commit hash 还能信吗?——vibe 项目供应链必须读这一篇。</div></div>
+
+  <div class="it-section">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8h4v8H6zm8 0h4v8h-4z"/></svg> 这篇讲什么</div>
+    <div class="it-summary">Git 提交签名存在"哈希链可锻性"漏洞:无需私钥即可生成同内容、不同哈希、且仍显示 Verified 的提交,影响 ECDSA、RSA、EdDSA、S/MIME 签名。</div>
+  </div>
+
+  <div class="it-section it-value">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg> 对我们有啥用</div>
+    <div class="it-value-body">对 vibecoder 团队是供应链安全警钟:依赖锁定、复现构建、模型/数据版本 pinning 都不能再把 commit hash 当作不可变主键。</div>
+  </div>
+
+  <div class="it-section"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12l4 4 10-10"/></svg> 关键要点</div><ul class="it-points"><li>签名 Git 哈希并不唯一标识内容,攻击者可生成内容相同、签名合法、哈希不同的"孪生"提交</li><li>三条攻击路径:ECDSA 代数求逆、OpenPGP 子包插入、CMS/SMIME DER 非规范重编码</li><li>直接冲击 Nixpkgs/Go modules/GitHub Actions 等依赖钉死 commit hash 的生态,以及把 hash 当内容寻址主键的复现构建系统</li></ul></div>
+
+  <div class="it-foot">
+    <a class="it-link" href="https://arxiv.org/abs/2607.02820" target="_blank" rel="noopener"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 4h6v6M10 14L20 4M19 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h6"/></svg> 原文溯源 (供核验)</a>
+  </div>
+</article>
+
+<article class="item" style="--theme-c:#A8B5A0">
+  <div class="it-head">
+    <div class="it-idx">03</div>
+    <div class="it-main">
+      <a class="it-title" href="https://simonwillison.net/2026/Jul/7/sqlite-utils-4/#atom-everything" target="_blank" rel="noopener">[Simon Willison’s Weblog](/)</a>
+      <div class="it-meta">
+        <span class="it-src">Simon Willison's Weblog</span>
+        <span class="star-row" title="4/5">★★★★<span class="star-dim">☆</span></span>
+        <span class="it-pub"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg><span class="pub-date">2026-07-07</span></span>
+        
+      </div>
+    </div>
+  </div>
+
+  <div class="it-section it-why"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 4M12 17h.01"/></svg> 为什么读</div><div class="it-why-body">抄一份 SQLite 迁移模板进项目, 顺带看看 AI 写工具的真实账单。</div></div>
+
+  <div class="it-section">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8h4v8H6zm8 0h4v8h-4z"/></svg> 这篇讲什么</div>
+    <div class="it-summary">sqlite-utils 4.0 正式发布, 新增数据库 schema 迁移、嵌套事务 (db.atomic) 与复合外键支持, 这是 6 年来首个主版本。</div>
+  </div>
+
+  <div class="it-section it-value">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg> 对我们有啥用</div>
+    <div class="it-value-body">vibecoder 做 SQLite 数据流必备工具升级, 迁移 API 可直接落地生产, AI 协作写工具的成本信号也值得参考。</div>
+  </div>
+
+  <div class="it-section"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12l4 4 10-10"/></svg> 关键要点</div><ul class="it-points"><li>新增 Python 装饰器风格的 Migrations API, 用 table.transform() 突破 SQLite ALTER TABLE 限制</li><li>新增 db.atomic() 嵌套事务与 compound foreign keys 支持</li><li>上一版 rc2 主要由 Claude Fable (Mythos 模型) 编写, 总成本约 $149, 是 AI 协助开发工具的实战案例</li></ul></div>
+
+  <div class="it-foot">
+    <a class="it-link" href="https://simonwillison.net/2026/Jul/7/sqlite-utils-4/#atom-everything" target="_blank" rel="noopener"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 4h6v6M10 14L20 4M19 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h6"/></svg> 原文溯源 (供核验)</a>
+  </div>
+</article>
+
+<article class="item" style="--theme-c:#A8B5A0">
+  <div class="it-head">
+    <div class="it-idx">04</div>
+    <div class="it-main">
+      <a class="it-title" href="https://github.com/maziyarpanahi/openmed" target="_blank" rel="noopener">Extract PII with smart merging (prevents tokenization fragmentation)</a>
+      <div class="it-meta">
+        <span class="it-src">GitHub Trending · Python (daily)</span>
+        <span class="star-row" title="3/5">★★★<span class="star-dim">☆☆</span></span>
+        <span class="it-pub"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg><span class="pub-date">2025-08-01</span></span>
+        
+      </div>
+    </div>
+  </div>
+
+  <div class="it-section it-why"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 4M12 17h.01"/></svg> 为什么读</div><div class="it-why-body">想在本地搭一条医疗文本脱敏+结构化管线,这一行代码就能用。</div></div>
+
+  <div class="it-section">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8h4v8H6zm8 0h4v8h-4z"/></svg> 这篇讲什么</div>
+    <div class="it-summary">OpenMed 是一个本地优先的医疗 AI 开源项目,提供 1,000+ 医学专用模型,支持 PII 提取与去标识化、实体识别,并通过智能合并避免分词碎片化问题。</div>
+  </div>
+
+  <div class="it-section it-value">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg> 对我们有啥用</div>
+    <div class="it-value-body">对 vibecoder 来说,可以零成本本地跑医疗 NER 与 PII 脱敏,适合做病历结构化、健康数据隐私合规类小工具,数据不出设备即可上线。</div>
+  </div>
+
+  <div class="it-section"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12l4 4 10-10"/></svg> 关键要点</div><ul class="it-points"><li>采用 smart merging 策略避免 PII 在分词时被切碎,提升识别准确率</li><li>覆盖 Python / Swift / REST / 浏览器(Transformers.js+WebGPU)多端,真正本地运行</li><li>1000+ 开源医学模型 + Apache 2.0,可直接 pip 安装集成到数据管线</li></ul></div>
+
+  <div class="it-foot">
+    <a class="it-link" href="https://github.com/maziyarpanahi/openmed" target="_blank" rel="noopener"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 4h6v6M10 14L20 4M19 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h6"/></svg> 原文溯源 (供核验)</a>
+  </div>
+</article>
+
+  </div>
+</section>
+
+<section class="panel" id="panel-promote">
+  <header class="theme-hd" style="--theme-c:#C4A484">
+    <div class="theme-tag" style="background:#C4A484">提升</div>
+    <h2 class="theme-name">数据工程与 AI 工程实践</h2>
+    <div class="theme-count">4 条</div>
+  </header>
+  <p class="theme-brief">RAG / workflow / 数据处理 / prompt 的工程化踩坑与最佳实践</p>
+  <div class="theme-body">
+    
+<article class="item" style="--theme-c:#C4A484">
+  <div class="it-head">
+    <div class="it-idx">01</div>
+    <div class="it-main">
+      <a class="it-title" href="https://36kr.com/p/3885479689465858?f=rss" target="_blank" rel="noopener">「德睿智药」获5200万美元B轮融资，AI设计的减肥药已进入3期临床｜36氪首发</a>
+      <div class="it-meta">
+        <span class="it-src">36氪</span>
+        <span class="star-row" title="4/5">★★★★<span class="star-dim">☆</span></span>
+        <span class="it-pub"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg><span class="pub-date">2026-07-08</span></span>
+        
+      </div>
+    </div>
+  </div>
+
+  <div class="it-section it-why"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 4M12 17h.01"/></svg> 为什么读</div><div class="it-why-body">想做 AI Native 创业?看他们怎么用多智能体+数据闭环把研发效率拉高 10 倍。</div></div>
+
+  <div class="it-section">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8h4v8H6zm8 0h4v8h-4z"/></svg> 这篇讲什么</div>
+    <div class="it-summary">德睿智药完成 5200 万美元 B 轮融资,自研口服 GLP-1 减肥药 MDR-001 已进 III 期,AI 平台 MAP 宣称研发效率达行业 10 倍以上。</div>
+  </div>
+
+  <div class="it-section it-value">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg> 对我们有啥用</div>
+    <div class="it-value-body">AI Native 创业范本:多智能体协同 + Clinical Data-in-the-Loop 数据闭环 + 自建基座模型 + 量化效率指标,方法论可直接借鉴。</div>
+  </div>
+
+  <div class="it-section"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12l4 4 10-10"/></svg> 关键要点</div><ul class="it-points"><li>MAP 三层架构(AI 设计+干湿实验+临床反馈)打造 Clinical Data-in-the-Loop 闭环</li><li>MDR-001 用 4.5 年/2300 万美金走到 III 期,对比传统 7-9 年/3-4 亿美金</li><li>40 人团队撑 15 条管线+5 个 PCC+中美 3 个 IND,AI 显著放大研发杠杆</li></ul></div>
+
+  <div class="it-foot">
+    <a class="it-link" href="https://36kr.com/p/3885479689465858?f=rss" target="_blank" rel="noopener"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 4h6v6M10 14L20 4M19 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h6"/></svg> 原文溯源 (供核验)</a>
+  </div>
+</article>
+
+<article class="item" style="--theme-c:#C4A484">
+  <div class="it-head">
+    <div class="it-idx">02</div>
+    <div class="it-main">
+      <a class="it-title" href="https://36kr.com/p/3885560015220997?f=rss" target="_blank" rel="noopener">瑞为技术暗盘破发，收盘跌17%｜敲钟时刻</a>
+      <div class="it-meta">
+        <span class="it-src">36氪</span>
+        <span class="star-row" title="3/5">★★★<span class="star-dim">☆☆</span></span>
+        <span class="it-pub"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg><span class="pub-date">2026-07-07</span></span>
+        
+      </div>
+    </div>
+  </div>
+
+  <div class="it-section it-why"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 4M12 17h.01"/></svg> 为什么读</div><div class="it-why-body">透过一只AI视觉股看清'薄盘+无基石'的港股IPO估值陷阱</div></div>
+
+  <div class="it-section">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8h4v8H6zm8 0h4v8h-4z"/></svg> 这篇讲什么</div>
+    <div class="it-summary">瑞为技术港股暗盘破发收盘跌17%，因无基石、无绿鞋、薄流通盘导致振幅41%巨大。</div>
+  </div>
+
+  <div class="it-section it-value">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg> 对我们有啥用</div>
+    <div class="it-value-body">用真实案例拆解AI视觉公司IPO的'薄流通+无稳价'估值结构，可作为分析AI标的上市表现的参考框架。</div>
+  </div>
+
+  <div class="it-section"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12l4 4 10-10"/></svg> 关键要点</div><ul class="it-points"><li>暗盘振幅41%源于2808万股仅占9.20%的全流通薄盘结构</li><li>发行市销率12.9x但收入增速仅12.1%，应收账款5.87亿反超年营收4.43亿</li><li>高毛利智慧民航业务收入下滑24.7%，被低毛利政府订单顶上</li></ul></div>
+
+  <div class="it-foot">
+    <a class="it-link" href="https://36kr.com/p/3885560015220997?f=rss" target="_blank" rel="noopener"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 4h6v6M10 14L20 4M19 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h6"/></svg> 原文溯源 (供核验)</a>
+  </div>
+</article>
+
+<article class="item" style="--theme-c:#C4A484">
+  <div class="it-head">
+    <div class="it-idx">03</div>
+    <div class="it-main">
+      <a class="it-title" href="https://36kr.com/p/3885481886674951?f=rss" target="_blank" rel="noopener">易控智驾暗盘破发：盘中一度跌近两成、收涨4%｜敲钟时刻</a>
+      <div class="it-meta">
+        <span class="it-src">36氪</span>
+        <span class="star-row" title="3/5">★★★<span class="star-dim">☆☆</span></span>
+        <span class="it-pub"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg><span class="pub-date">2026-07-07</span></span>
+        
+      </div>
+    </div>
+  </div>
+
+  <div class="it-section it-why"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 4M12 17h.01"/></svg> 为什么读</div><div class="it-why-body">想看真实港股暗盘数据怎么拆？这篇把盘面、估值、流通结构三件套写得很齐。</div></div>
+
+  <div class="it-section">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8h4v8H6zm8 0h4v8h-4z"/></svg> 这篇讲什么</div>
+    <div class="it-summary">易控智驾港股上市前夜富途暗盘走V形：开盘破发、盘中跌近20%，尾盘收涨4%报91.5港元。</div>
+  </div>
+
+  <div class="it-section it-value">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg> 对我们有啥用</div>
+    <div class="it-value-body">对vibecoder团队，这是一篇港股IPO暗盘盘面复盘，含定价/估值/流通盘结构数据，可作金融数据可视化的真实案例。</div>
+  </div>
+
+  <div class="it-section"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12l4 4 10-10"/></svg> 关键要点</div><ul class="it-points"><li>发行价87.92港元(招股上限)、市值约130亿港元、2025年收入14.35亿元、静态P/S约8.2倍，公司仍处净亏损。</li><li>暗盘V形：开盘82.70破发→最低71港元(-19.2%)→收91.50港元(+4.07%)，全天振幅24.68%，平均成交价仍低于发行价。</li><li>8家基石锁定6个月、占发售约50%，流通盘薄叠加情绪分歧，解释了高振幅；与希迪智驾首日破发13.69%形成同赛道对照。</li></ul></div>
+
+  <div class="it-foot">
+    <a class="it-link" href="https://36kr.com/p/3885481886674951?f=rss" target="_blank" rel="noopener"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 4h6v6M10 14L20 4M19 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h6"/></svg> 原文溯源 (供核验)</a>
+  </div>
+</article>
+
+<article class="item" style="--theme-c:#C4A484">
+  <div class="it-head">
+    <div class="it-idx">04</div>
+    <div class="it-main">
+      <a class="it-title" href="https://36kr.com/p/3885457443385346?f=rss" target="_blank" rel="noopener">氪星晚报 ｜苹果折叠屏已在量产；潘功胜：香港可以抓住有利时机，吸引更多主权财富和国际企业到港发债融资</a>
+      <div class="it-meta">
+        <span class="it-src">36氪</span>
+        <span class="star-row" title="3/5">★★★<span class="star-dim">☆☆</span></span>
+        <span class="it-pub"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg><span class="pub-date">2026-07-07</span></span>
+        
+      </div>
+    </div>
+  </div>
+
+  <div class="it-section it-why"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 4M12 17h.01"/></svg> 为什么读</div><div class="it-why-body">想一文速览当天AI与科技头条,特别是腾讯Vibe Coding动向?</div></div>
+
+  <div class="it-section">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8h4v8H6zm8 0h4v8h-4z"/></svg> 这篇讲什么</div>
+    <div class="it-summary">36氪晚间快讯聚合,涵盖苹果折叠屏iPhone量产、腾讯吐司Vibe Coding平台iOS上线、零一万物新品、LG新能源利润暴跌等大公司动态与投融资资讯。</div>
+  </div>
+
+  <div class="it-section it-value">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg> 对我们有啥用</div>
+    <div class="it-value-body">对vibecoder最直接相关的是腾讯"吐司"作为零门槛Vibe Coding产品iOS上线,以及零一万物"一号位决策"产品动向,可窥AI应用生成赛道格局。</div>
+  </div>
+
+  <div class="it-section"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12l4 4 10-10"/></svg> 关键要点</div><ul class="it-points"><li>腾讯"吐司"Vibe Coding产品iOS版正式上线,8月将面向开发者生态全量开放一站式上架与商业化API能力</li><li>苹果折叠屏iPhone已进入量产,富士康启动大规模招工储备产能</li><li>网传"7月1日新车智驾芯片自主化率不低于70%"新规被工信部核查为谣言</li></ul></div>
+
+  <div class="it-foot">
+    <a class="it-link" href="https://36kr.com/p/3885457443385346?f=rss" target="_blank" rel="noopener"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 4h6v6M10 14L20 4M19 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h6"/></svg> 原文溯源 (供核验)</a>
+  </div>
+</article>
+
+  </div>
+</section>
+
+<section class="panel" id="panel-vision">
+  <header class="theme-hd" style="--theme-c:#B5A8A3">
+    <div class="theme-tag" style="background:#B5A8A3">视野</div>
+    <h2 class="theme-name">行业趋势与战略 (视野与决策)</h2>
+    <div class="theme-count">4 条</div>
+  </header>
+  <p class="theme-brief">报告 / 融资 / 监管 / 商业模式 等行业大势与决策信号</p>
+  <div class="theme-body">
+    
+<article class="item" style="--theme-c:#B5A8A3">
+  <div class="it-head">
+    <div class="it-idx">01</div>
+    <div class="it-main">
+      <a class="it-title" href="https://www.qbitai.com/2026/07/445184.html" target="_blank" rel="noopener">机器人视觉迎来新突破！蚂蚁灵波空间感知模型LingBot-Depth 2.0正式发布</a>
+      <div class="it-meta">
+        <span class="it-src">量子位 QbitAI</span>
+        <span class="star-row" title="4/5">★★★★<span class="star-dim">☆</span></span>
+        <span class="it-pub"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg><span class="pub-date">2026-07-07</span></span>
+        
+      </div>
+    </div>
+  </div>
+
+  <div class="it-section it-why"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 4M12 17h.01"/></svg> 为什么读</div><div class="it-why-body">机器人视觉栈多了一个开源、对边界和透明场景特别能打的底座，动手做具身/AR/3D 项目值得拿来试试。</div></div>
+
+  <div class="it-section">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8h4v8H6zm8 0h4v8h-4z"/></svg> 这篇讲什么</div>
+    <div class="it-summary">蚂蚁灵波发布空间感知模型 LingBot-Depth 2.0 与视觉基座 LingBot-Vision，在深度补全基准取得多项第一，开源模型权重。</div>
+  </div>
+
+  <div class="it-section it-value">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg> 对我们有啥用</div>
+    <div class="it-value-body">开源了视觉基座与深度补全模型权重，做机器人/具身/3D 视觉应用的 vibecoder 可直接拿来跑、复现并接入自研 pipeline。</div>
+  </div>
+
+  <div class="it-section"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12l4 4 10-10"/></svg> 关键要点</div><ul class="it-points"><li>数据从 300 万扩到 1.5 亿，深度补全 16 项测评拿下 12 项第一，室内大面积深度误差 RMSE 砍半</li><li>业内首个以"边界结构"为预训练目标的视觉基础模型 LingBot-Vision，开源 ViT-G/L/B/S 四档</li><li>与奥比中光 Gemini 330 系列双目相机打通并通过认证，后续推 SDK 与一体化相机，落地链条完整</li></ul></div>
+
+  <div class="it-foot">
+    <a class="it-link" href="https://www.qbitai.com/2026/07/445184.html" target="_blank" rel="noopener"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 4h6v6M10 14L20 4M19 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h6"/></svg> 原文溯源 (供核验)</a>
+  </div>
+</article>
+
+<article class="item" style="--theme-c:#B5A8A3">
+  <div class="it-head">
+    <div class="it-idx">02</div>
+    <div class="it-main">
+      <a class="it-title" href="https://www.qbitai.com/2026/07/445443.html" target="_blank" rel="noopener">从共识到非共识：科技有「联想」沙龙首场活动直击具身智能产业化“三大困惑”</a>
+      <div class="it-meta">
+        <span class="it-src">量子位 QbitAI</span>
+        <span class="star-row" title="3/5">★★★<span class="star-dim">☆☆</span></span>
+        <span class="it-pub"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg><span class="pub-date">2026-07-07</span></span>
+        
+      </div>
+    </div>
+  </div>
+
+  <div class="it-section it-why"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 4M12 17h.01"/></svg> 为什么读</div><div class="it-why-body">八位玩家一次性把具身智能数据/模型/商业化的真实数字与路线选型讲透了。</div></div>
+
+  <div class="it-section">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8h4v8H6zm8 0h4v8h-4z"/></svg> 这篇讲什么</div>
+    <div class="it-summary">联想发起"科技有联想"首场沙龙，8位具身智能产学研投专家围绕数据基建、模型范式、量产商业化三大议题展开深度思辨。</div>
+  </div>
+
+  <div class="it-section it-value">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg> 对我们有啥用</div>
+    <div class="it-value-body">对vibecoder而言可快速抓住具身智能的真实数据成本、训练开销、模型路线选择与2B/2C落地节奏等可量化产业判断。</div>
+  </div>
+
+  <div class="it-section"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12l4 4 10-10"/></svg> 关键要点</div><ul class="it-points"><li>真机遥操数据每小时成本数百至千元，智在无界已将人类视频扩至20万小时，是国内最大具身预训练库，但Ego4D清洗后仅剩约1/3可用</li><li>显式世界模型训练成本约为隐式80倍，20万小时显式路线一次训练数千万至上亿，隐式成更优路径</li><li>2B场景将比2C提前3-5年落地，五指灵巧手三年内收敛速度或超预期，量产与工程化是创业公司最常被低估的死穴</li></ul></div>
+
+  <div class="it-foot">
+    <a class="it-link" href="https://www.qbitai.com/2026/07/445443.html" target="_blank" rel="noopener"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 4h6v6M10 14L20 4M19 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h6"/></svg> 原文溯源 (供核验)</a>
+  </div>
+</article>
+
+<article class="item" style="--theme-c:#B5A8A3">
+  <div class="it-head">
+    <div class="it-idx">03</div>
+    <div class="it-main">
+      <a class="it-title" href="https://www.qbitai.com/2026/07/445229.html" target="_blank" rel="noopener">让Skill“有图可依”：openJiuwen首发多模态Skill范式Skill-Omni</a>
+      <div class="it-meta">
+        <span class="it-src">量子位 QbitAI</span>
+        <span class="star-row" title="3/5">★★★<span class="star-dim">☆☆</span></span>
+        <span class="it-pub"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg><span class="pub-date">2026-07-07</span></span>
+        
+      </div>
+    </div>
+  </div>
+
+  <div class="it-section it-why"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 4M12 17h.01"/></svg> 为什么读</div><div class="it-why-body">做 Agent 的人都能借鉴：如何把视频/网页里的视觉经验沉淀成可调用的 Skill。</div></div>
+
+  <div class="it-section">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8h4v8H6zm8 0h4v8h-4z"/></svg> 这篇讲什么</div>
+    <div class="it-summary">openJiuwen 发布 Skill-Omni 多模态 Skill 范式，把网页和视频中的视觉经验自动转成 Agent 可复用的图文 Skill，弥补纯文本 Skill 在视觉/GUI 任务上的短板。</div>
+  </div>
+
+  <div class="it-section it-value">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg> 对我们有啥用</div>
+    <div class="it-value-body">对 vibecoder 而言，可以直接用 skill-omni-creation 把 B 站教程和图文博客一键转成可执行的多模态 Skill，作为 Agent 工作流的经验资产来源。</div>
+  </div>
+
+  <div class="it-section"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12l4 4 10-10"/></svg> 关键要点</div><ul class="it-points"><li>纯文本 Skill 在图片编辑、GUI 自动化、视频教程等视觉任务上信息严重不足</li><li>skill-omni-creation 支持网页和视频链接两种入口，自动提取截图、关键帧并去噪重组为多模态 Skill</li><li>从 SwarmSkill→SwarmFlow→Skill-Omni，openJiuwen 把 Skill 升级为可复用的多模态经验层，下一步探索 Physical Skill</li></ul></div>
+
+  <div class="it-foot">
+    <a class="it-link" href="https://www.qbitai.com/2026/07/445229.html" target="_blank" rel="noopener"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 4h6v6M10 14L20 4M19 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h6"/></svg> 原文溯源 (供核验)</a>
+  </div>
+</article>
+
+<article class="item" style="--theme-c:#B5A8A3">
+  <div class="it-head">
+    <div class="it-idx">04</div>
+    <div class="it-main">
+      <a class="it-title" href="https://www.qbitai.com/2026/07/445230.html" target="_blank" rel="noopener">刚刚，首个空间原生的具身视觉基模开源！机器人更会看我们的世界了</a>
+      <div class="it-meta">
+        <span class="it-src">量子位 QbitAI</span>
+        <span class="star-row" title="3/5">★★★<span class="star-dim">☆☆</span></span>
+        <span class="it-pub"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg><span class="pub-date">2026-07-07</span></span>
+        
+      </div>
+    </div>
+  </div>
+
+  <div class="it-section it-why"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 4M12 17h.01"/></svg> 为什么读</div><div class="it-why-body">一文掌握蚂蚁灵波新开源空间视觉基模的能力边界与开源入口,做具身/机器人原型时多一个可选项。</div></div>
+
+  <div class="it-section">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8h4v8H6zm8 0h4v8h-4z"/></svg> 这篇讲什么</div>
+    <div class="it-summary">蚂蚁灵波开源首个空间原生具身视觉基模 LingBot-Vision 与深度模型 LingBot-Depth 2.0,重点解决透明/反光、小远目标、复杂室内、弱光遮挡等场景下的深度估计难题。</div>
+  </div>
+
+  <div class="it-section it-value">
+    <div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg> 对我们有啥用</div>
+    <div class="it-value-body">对做机器人/具身智能/视觉应用的 vibecoder 来说,这是一个可直接复用的开源空间视觉底座,GitHub 与 arXiv 都已放出,可快速集成到原型中评估效果。</div>
+  </div>
+
+  <div class="it-section"><div class="it-section-label"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 12l4 4 10-10"/></svg> 关键要点</div><ul class="it-points"><li>首个空间原生具身视觉基模 LingBot-Vision 开源,配套深度模型 LingBot-Depth 2.0,模型/代码/技术报告均已公开</li><li>重点攻克的四类难题:透明反光、小远目标、室内复杂场景、弱光遮挡与杂乱</li><li>对机器人在抓取、导航、家庭服务等任务上的边界/层级感知有明显改善,可作为机器人视觉栈的新基座候选</li></ul></div>
+
+  <div class="it-foot">
+    <a class="it-link" href="https://www.qbitai.com/2026/07/445230.html" target="_blank" rel="noopener"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 4h6v6M10 14L20 4M19 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h6"/></svg> 原文溯源 (供核验)</a>
+  </div>
+</article>
+
+  </div>
+</section>
+
+    </div>
+  </div>
+
+  <footer class="page-ft">
+    <div class="row">daily-digest-agent v1.1 · 3 主题 (动手/提升/视野) · 4 tab 切换 (无 JS) · 每主题 TOP 4</div>
+    <div class="row">信源池: <b>9 源 (5 英 + 4 中)</b> · LLM: <b>ON</b> · 输出: <b>半自动日报更新/2026-07-08-daily-V1.1/</b></div>
+    <div class="row">© vibecoding 数据分析小组 · 每条总结基于 markitdown 后的原文 + LLM 总结</div>
+  </footer>
+
+</div>
+</body>
+</html>
